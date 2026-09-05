@@ -1,0 +1,17 @@
+node_modules/
+.next*/
+coverage/
+playwright-report/
+test-results/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+backups/
+output/pdf/
+tmp/pdfs/
+.DS_Store
