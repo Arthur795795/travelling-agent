@@ -3,6 +3,7 @@ import { checkRequirements } from "../requirements/service.ts";
 import { TransientSecret } from "../security/secrets.ts";
 import type { PlanningExecutor } from "./executor.ts";
 import type { ExecutionStore } from "./execution-store.ts";
+import type { GenerationReadiness } from "../config/generation-readiness.ts";
 const KeySchema = z
   .string()
   .min(16)
@@ -17,6 +18,7 @@ export function createJobHttp(
   executor: PlanningExecutor,
   enabled = () => false,
   now = () => new Date(),
+  readiness: () => GenerationReadiness = () => ({ ready: true }),
 ) {
   const authorized = (request: Request, id: string) => {
     const bearer = request.headers
@@ -38,6 +40,12 @@ export function createJobHttp(
         return Response.json(
           { code: "GENERATION_DISABLED" },
           { status: 403, headers },
+        );
+      const available = readiness();
+      if (!available.ready)
+        return Response.json(
+          { code: available.code, message: available.message },
+          { status: available.code === "AMAP_KEY_MISSING" ? 503 : 403, headers },
         );
       const parsed = CreateSchema.safeParse(
         await request.json().catch(() => null),

@@ -1,0 +1,9 @@
+[
+  {
+    "participantId": "participant-1",
+    "consented": true,
+    "completedWithoutGuidance": false,
+    "tasks": { "editDemo": false, "planOwnTrip": false },
+    "feedbackDeleted": false
+  }
+]

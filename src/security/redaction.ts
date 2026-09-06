@@ -25,6 +25,8 @@ const personalName =
   /((?:旅客姓名|联系人姓名|真实姓名|姓名|full\s*name|travell?er\s*name|contact\s*name)\s*[:：]\s*)([^\s,，;；]{2,40})/gi;
 const homeAddress =
   /((?:家庭住址|住宅地址|home\s*address)\s*[:：]\s*)([^\n]{6,200})/gi;
+const opaqueMachineIdentifier =
+  /^(?:[a-f\d]{64}|[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})$/i;
 
 function resetAndTest(pattern: RegExp, input: string): boolean {
   pattern.lastIndex = 0;
@@ -34,6 +36,10 @@ function resetAndTest(pattern: RegExp, input: string): boolean {
 export function detectSensitiveText(
   input: string,
 ): SensitiveDataKind | undefined {
+  // UUIDs and SHA-256 values are generated internally and can randomly contain
+  // phone, identity or card-shaped digit runs. Only exempt the complete,
+  // canonical machine value; embedded values and ordinary text stay blocked.
+  if (opaqueMachineIdentifier.test(input)) return undefined;
   if (resetAndTest(apiKeyValue, input)) return "api_key";
   if (resetAndTest(chineseIdentity, input)) return "identity";
   if (resetAndTest(chinesePhone, input)) return "phone";

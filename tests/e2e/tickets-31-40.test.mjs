@@ -49,6 +49,7 @@ test("fixed demo, local edits, disclosure and read-only share work end to end", 
     browser.evaluate("location.pathname.startsWith('/trips/')"),
   );
   const tripPath = await browser.evaluate("location.pathname");
+  await browser.click("编辑、锁定或局部调整行程");
   await waitFor(() => browser.contains("编辑行程 · 版本 1"));
   const storageKey = `travel-agent:trip:${tripPath.split("/").at(-1)}`;
   const baselineEnvelope = await browser.evaluate(
@@ -58,22 +59,31 @@ test("fixed demo, local edits, disclosure and read-only share work end to end", 
     `(()=>{const key=${JSON.stringify(storageKey)};const envelope=JSON.parse(localStorage.getItem(key));const trip=envelope.value;trip.lifecycleStatus='blocked';trip.budget.withinLimit=false;trip.budget.items.push({id:'unknown-meals',category:'meals',title:'餐饮待确认',cost:{kind:'unknown',currency:'CNY',reason:'没有可靠报价'},paymentStatus:'unknown',evidenceIds:[]});trip.alerts.push({id:'blocking-reservation',severity:'blocking',code:'RESERVATION_REQUIRED',message:'必须先确认预约',entityIds:[trip.days[0].activities[0].id]});trip.claims[0].status='failed';trip.claims[0].conflictEvidenceIds=[trip.evidence[1].id];localStorage.setItem(key,JSON.stringify(envelope));})()`,
   );
   await browser.cdp("Page.reload");
-  await waitFor(() => browser.contains("出发前必须解决"));
+  await waitFor(() => browser.contains("出发前建议确认"));
   assert.ok(await browser.contains("必须先确认预约"));
+  await browser.evaluate(
+    `[...document.querySelectorAll('summary')].find(e=>e.textContent.includes('查看来源和技术核验记录')).click()`,
+  );
   assert.ok(await browser.contains("查询失败"));
-  assert.ok(await browser.contains("存在来源冲突"));
-  assert.ok(await browser.contains("预算超限"));
+  assert.ok(await browser.contains("来源冲突"));
+  assert.ok(await browser.contains("当前估算超过预算上限"));
+  await browser.evaluate(
+    `[...document.querySelectorAll('summary')].find(e=>e.textContent.includes('查看预算明细')).click()`,
+  );
   assert.ok(await browser.contains("费用未知（非零）"));
   await browser.evaluate(
     `localStorage.setItem(${JSON.stringify(storageKey)},${JSON.stringify(baselineEnvelope)})`,
   );
   await browser.cdp("Page.reload");
+  await waitFor(() => browser.contains("行程概览"));
+  await browser.click("编辑、锁定或局部调整行程");
   await waitFor(() => browser.contains("编辑行程 · 版本 1"));
   await browser.fill("私人备注", "PRIVATE-E2E-NOTE");
   await browser.click("保存备注");
   await waitFor(() => browser.contains("编辑行程 · 版本 2"));
   assert.ok(await browser.contains("PRIVATE-E2E-NOTE"));
 
+  await browser.click("创建只读分享");
   await browser.click("预览分享字段");
   await waitFor(() => browser.contains("分享前预览"));
   const previewText = await browser.evaluate(
@@ -110,6 +120,8 @@ test("fixed demo, local edits, disclosure and read-only share work end to end", 
   await waitFor(async () => !(await browser.contains("只读分享")));
 
   await browser.goto(tripPath);
+  await waitFor(() => browser.contains("行程概览"));
+  await browser.click("编辑、锁定或局部调整行程");
   await waitFor(() => browser.contains("编辑行程 · 版本 2"));
   assert.ok(await browser.contains("PRIVATE-E2E-NOTE"));
   await browser.click("撤销最近修改");
@@ -148,6 +160,8 @@ test("fixed demo, local edits, disclosure and read-only share work end to end", 
   assert.ok(await browser.contains("模型备案信息：待核实"));
 
   await browser.goto(tripPath);
+  await waitFor(() => browser.contains("行程概览"));
+  await browser.click("编辑、锁定或局部调整行程");
   await waitFor(() => browser.contains("编辑行程 · 版本 4"));
   await browser.fill("新预算上限", "8500");
   await browser.click("预览预算变化");

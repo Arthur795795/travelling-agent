@@ -15,6 +15,11 @@ test("fixed providers complete the real seven-stage pipeline with bounded repair
   const brief = executableTrip().brief;
   const dates = ["2026-10-01", "2026-10-02", "2026-10-03"];
   const requests: string[] = [];
+  const requestPolicies: Array<{
+    kind: string;
+    maxOutputTokens?: number;
+    reasoningEffort?: string;
+  }> = [];
   const pipeline = createPipeline(
     {
       createResponse: async (secret, request) => {
@@ -73,6 +78,11 @@ test("fixed providers complete the real seven-stage pipeline with bounded repair
         requests.push(
           isSkeleton ? "skeleton" : context.trip ? "repair" : "enrichment",
         );
+        requestPolicies.push({
+          kind: requests.at(-1)!,
+          maxOutputTokens: request.maxOutputTokens,
+          reasoningEffort: request.reasoningEffort,
+        });
         return {
           responseId: `response-${requests.length}`,
           status: "completed",
@@ -126,6 +136,12 @@ test("fixed providers complete the real seven-stage pipeline with bounded repair
   assert.ok((view.metrics?.toolCalls ?? 0) > 0);
   assert.equal(view.choices.length, 2);
   assert.deepEqual(requests, ["skeleton", "enrichment", "repair", "repair"]);
+  assert.deepEqual(requestPolicies, [
+    { kind: "skeleton", maxOutputTokens: 12_000, reasoningEffort: "low" },
+    { kind: "enrichment", maxOutputTokens: 8_000, reasoningEffort: "low" },
+    { kind: "repair", maxOutputTokens: 8_000, reasoningEffort: "low" },
+    { kind: "repair", maxOutputTokens: 8_000, reasoningEffort: "low" },
+  ]);
   assert.ok(view.issues.some((i) => i.code === "PLACE_UNRESOLVED"));
   assert.doesNotMatch(JSON.stringify(store.state(job.id)), /sk-test/);
 });

@@ -1,4 +1,9 @@
 import { requireServerEnvironment } from "../../config/environment.ts";
+import {
+  amapTransport,
+  type AmapFetch,
+  type AmapTransport,
+} from "./network.ts";
 
 export type AmapErrorCode =
   | "authentication"
@@ -25,7 +30,8 @@ export class AmapError extends Error {
 export interface AmapClientOptions {
   baseUrl?: string;
   timeoutMs?: number;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: AmapFetch;
+  transport?: AmapTransport;
   environment?: Readonly<Record<string, string | undefined>>;
   now?: () => Date;
 }
@@ -67,7 +73,7 @@ export interface AmapResponse {
 export class AmapClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl: AmapFetch;
   private readonly environment: Readonly<Record<string, string | undefined>>;
   private readonly now: () => Date;
 
@@ -77,7 +83,7 @@ export class AmapClient {
       "",
     );
     this.timeoutMs = options.timeoutMs ?? 8_000;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl ?? options.transport?.fetch ?? amapTransport().fetch;
     this.environment = options.environment ?? process.env;
     this.now = options.now ?? (() => new Date());
   }

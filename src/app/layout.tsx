@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { OfflineShell } from "../components/offline-shell.tsx";
+import { loadFeatureFlags } from "../config/features.ts";
 import "./styles.css";
 
 export const metadata: Metadata = {
@@ -14,6 +16,9 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
+        <a className="skip-link" href="#main-content">
+          跳到主要内容
+        </a>
         <header className="site-nav">
           <Link href="/">旅行 Agent</Link>
           <nav aria-label="主导航">
@@ -23,6 +28,7 @@ export default function RootLayout({
             <a href="/about">关于</a>
           </nav>
         </header>
+        <OfflineShell enabled={loadFeatureFlags().offlineReadonly} />
         {children}
       </body>
     </html>

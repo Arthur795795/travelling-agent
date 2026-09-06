@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { EvidenceObservation } from "../../src/evidence/normalize.ts";
 import { normalizeEvidence } from "../../src/evidence/normalize.ts";
+import { findSensitiveData } from "../../src/security/redaction.ts";
 
 function observation(
   id: string,
@@ -41,6 +42,8 @@ test("deduplicates claims by subject/date/field while retaining participating so
   ]);
   assert.equal(result.evidence.length, 2);
   assert.deepEqual(result.issues, []);
+  assert.match(result.claims[0].id, /^claim:(?:[a-f\d]{4}-){5}[a-f\d]{4}$/);
+  assert.equal(findSensitiveData(result.claims[0].id), undefined);
 });
 
 test("lower-priority evidence requiring recheck does not downgrade a matching verified official fact", () => {

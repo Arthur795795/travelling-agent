@@ -117,20 +117,28 @@ test("maps DeepSeek SSE to public text/tool/search events without exposing reaso
 });
 
 test("maps status failures, incomplete streams, timeout, and caller cancellation", async () => {
-  const statusClient = new DeepSeekResponsesClient({
-    fetchImpl: async () => new Response("denied", { status: 429 }),
-  });
-  await assert.rejects(
-    () =>
-      statusClient.createResponse(
-        new TransientSecret("sk-rate-0123456789abcdef"),
-        { input: "x" },
-      ),
-    (error: unknown) =>
-      error instanceof DeepSeekResponseError &&
-      error.code === "rate_limited" &&
-      error.retryable,
-  );
+  for (const [status, code, retryable] of [
+    [401, "invalid_key", false],
+    [403, "quota_or_permission", false],
+    [429, "rate_limited", true],
+    [500, "upstream_error", true],
+  ] as const) {
+    const key = `sk-status-${status}-0123456789abcdef`;
+    const statusClient = new DeepSeekResponsesClient({
+      fetchImpl: async () =>
+        new Response(`upstream detail ${key}`, { status }),
+    });
+    await assert.rejects(
+      () =>
+        statusClient.createResponse(new TransientSecret(key), { input: "x" }),
+      (error: unknown) =>
+        error instanceof DeepSeekResponseError &&
+        error.code === code &&
+        error.retryable === retryable &&
+        !error.message.includes(key) &&
+        !error.message.includes("upstream detail"),
+    );
+  }
 
   const incompleteClient = new DeepSeekResponsesClient({
     fetchImpl: async () =>

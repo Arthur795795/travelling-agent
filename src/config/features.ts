@@ -4,6 +4,9 @@ export const FEATURE_NAMES = [
   "amap",
   "sharing",
   "export",
+  // Offline read-only viewing is a secondary capability: it must be removable
+  // without touching the planning loop, so it is a flag like any other.
+  "offlineReadonly",
 ] as const;
 
 export type FeatureName = (typeof FEATURE_NAMES)[number];
@@ -15,6 +18,7 @@ const ENV_NAMES: Record<FeatureName, string> = {
   amap: "FEATURE_AMAP",
   sharing: "FEATURE_SHARING",
   export: "FEATURE_EXPORT",
+  offlineReadonly: "FEATURE_OFFLINE_READONLY",
 };
 
 export function loadFeatureFlags(

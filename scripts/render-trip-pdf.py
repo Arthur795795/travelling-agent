@@ -12,16 +12,20 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from collections import Counter
 
 pdfmetrics.registerFont(TTFont("TripChinese", sys.argv[1]))
 payload = json.load(sys.stdin)
 trip, fields = payload["trip"], payload["fields"]
 output = io.BytesIO()
-style = ParagraphStyle("Body", fontName="TripChinese", fontSize=10, leading=16, spaceAfter=8, wordWrap="CJK", alignment=TA_LEFT)
-heading = ParagraphStyle("Heading", parent=style, fontSize=17, leading=24, textColor=colors.HexColor("#176a68"), spaceAfter=14)
+style = ParagraphStyle("Body", fontName="TripChinese", fontSize=10, leading=16, spaceAfter=8, wordWrap="CJK", alignment=TA_LEFT, textColor=colors.HexColor("#24352b"))
+heading = ParagraphStyle("Heading", parent=style, fontSize=17, leading=24, textColor=colors.HexColor("#245c41"), spaceBefore=8, spaceAfter=14)
+small = ParagraphStyle("Small", parent=style, fontSize=8.5, leading=13, textColor=colors.HexColor("#5b6b60"))
 story = []
 def para(text, header=False):
     story.append(Paragraph(escape(str(text)).replace("\n", "<br/>"), heading if header else style))
+def subtle(text):
+    story.append(Paragraph(escape(str(text)).replace("\n", "<br/>"), small))
 def clock(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%H:%M")
 def money(value):
@@ -32,9 +36,13 @@ para(f'AI 辅助生成 | {trip.get("model", "deepseek-v4-pro")} | 版本 {trip["
 para(f'{trip["brief"]["destination"]} | {trip["brief"]["startDate"]} - {trip["brief"]["endDate"]} | Asia/Shanghai')
 if trip.get("preset"): para(trip["preset"]["notice"])
 para("不代订、不保证库存。请在出发前复核预约、开放时间、价格和交通。")
-para("当前状态：" + trip["lifecycleStatus"])
-for alert in trip["alerts"]:
-    if alert["severity"] == "blocking": para("待解决：" + alert["message"])
+status_labels = {"executable": "可执行", "blocked": "有事项待确认", "checked": "已检查", "draft": "草案"}
+para("当前状态：" + status_labels.get(trip["lifecycleStatus"], trip["lifecycleStatus"]))
+blocking = Counter(alert["message"] for alert in trip["alerts"] if alert["severity"] == "blocking")
+if blocking:
+    para(f"出发前建议确认 · {sum(blocking.values())} 项（相同问题已合并）", True)
+    for message, count in blocking.items():
+        para(f"• {message}" + (f"（涉及 {count} 项）" if count > 1 else ""))
 for day in trip["days"]:
     story.append(PageBreak())
     para(day["date"] + " · " + day["title"], True)
@@ -53,9 +61,16 @@ if fields["budget"]:
     for item in trip["budget"]["items"]: para(f'{item["title"]} | {item["paymentStatus"]} | {money(item["cost"])}')
     para(f'机动金 {trip["budget"]["contingencyPercent"]}% | 合计 {money(trip["budget"]["total"])}')
 story.append(PageBreak()); para("来源与复核提示", True)
+status_names = {"verified": "已核验", "recheck_required": "待复核", "failed": "查询失败", "discovery_only": "仅作线索"}
+counts = Counter(item["status"] for item in trip["evidence"])
+para(" · ".join(f'{status_names.get(status, status)} {count}' for status, count in counts.items()))
+seen_sources = set()
 for item in trip["evidence"]:
-    para(f'{item["sourceName"]} | {item["status"]} | {item["checkedAt"]}')
-    if item.get("url"): para(item["url"])
+    key = (item["sourceName"], item.get("url"), item["status"])
+    if key in seen_sources: continue
+    seen_sources.add(key)
+    para(f'{item["sourceName"]} | {status_names.get(item["status"], item["status"])} | {item["checkedAt"]}')
+    if item.get("url"): subtle(item["url"])
 def footer(page, doc):
     page.setFont("TripChinese", 8)
     page.drawString(40, 25, "AI 辅助生成 · 非订单或库存保证")

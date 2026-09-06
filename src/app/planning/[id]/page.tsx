@@ -6,7 +6,7 @@ export default async function PlanningPage({
 }) {
   const { id } = await params;
   return (
-    <main className="shell">
+    <main className="shell" id="main-content" tabIndex={-1}>
       <JobProgress id={id} />
     </main>
   );

@@ -75,6 +75,41 @@ const migrations = [
       created_at TEXT NOT NULL
     );
   `,
+  `
+    CREATE TABLE rate_limit_salts (
+      day TEXT PRIMARY KEY,
+      salt TEXT NOT NULL
+    );
+    CREATE TABLE rate_limit_counters (
+      scope TEXT NOT NULL,
+      identity_hash TEXT NOT NULL,
+      window_start TEXT NOT NULL,
+      count INTEGER NOT NULL,
+      expires_at TEXT NOT NULL,
+      PRIMARY KEY (scope, identity_hash, window_start)
+    );
+    CREATE INDEX rate_limit_counters_expiry ON rate_limit_counters(expires_at);
+    CREATE TABLE product_cost_ledger (
+      id TEXT PRIMARY KEY,
+      month TEXT NOT NULL,
+      amount_cny REAL NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX product_cost_ledger_month ON product_cost_ledger(month);
+  `,
+  `
+    CREATE TABLE feedback_records (
+      id TEXT PRIMARY KEY,
+      delete_token_hash TEXT NOT NULL UNIQUE,
+      rating TEXT NOT NULL,
+      reasons TEXT NOT NULL,
+      comment TEXT,
+      context TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+    CREATE INDEX feedback_records_expiry ON feedback_records(expires_at);
+  `,
 ];
 
 export function migrateDatabase(database: SqliteDatabase): void {

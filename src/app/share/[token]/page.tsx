@@ -15,7 +15,7 @@ export default async function SharePage({
   const share = shareService().read((await params).token);
   if (!share) notFound();
   return (
-    <main className="shell">
+    <main className="shell" id="main-content" tabIndex={-1}>
       <p>只读分享 · 到期时间 {share.expiresAt}</p>
       <TripDetails trip={share.trip} showBudget={share.fields.budget} />
       <TripTimeline trip={share.trip} />

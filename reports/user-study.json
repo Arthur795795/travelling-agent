@@ -1,0 +1,13 @@
+{
+  "status": "incomplete",
+  "participantCount": 0,
+  "completedWithoutGuidance": 0,
+  "acceptablePlanMedianMs": null,
+  "keyEditMedianMs": null,
+  "gate": {
+    "passed": false,
+    "reasons": [
+      "real_participants_missing"
+    ]
+  }
+}

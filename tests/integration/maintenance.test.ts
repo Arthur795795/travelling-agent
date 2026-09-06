@@ -36,7 +36,25 @@ test("cleanup, encrypted backup, seven-day rotation and non-destructive restore 
     "{}",
     "2026-08-01T00:00:00Z",
   );
-  assert.deepEqual(cleanupExpired(db, now), { jobs: 1, shares: 0, metrics: 1 });
+  // Ticket 041: closed rate-limit windows and previous days' salts expire too.
+  db.prepare("INSERT INTO rate_limit_counters VALUES (?,?,?,?,?)").run(
+    "planning_job",
+    "hash",
+    "2026-09-03T00:00:00Z",
+    3,
+    "2026-09-03T01:00:00Z",
+  );
+  db.prepare("INSERT INTO rate_limit_salts VALUES (?,?)").run(
+    "2026-09-03",
+    "stale",
+  );
+  assert.deepEqual(cleanupExpired(db, now), {
+    jobs: 1,
+    shares: 0,
+    metrics: 1,
+    rateLimits: 2,
+    feedback: 0,
+  });
   const key = Buffer.alloc(32, 7);
   assert.throws(
     () => createEncryptedBackup(db, join(root, "failed"), Buffer.alloc(8), now),

@@ -15,7 +15,9 @@ import {
 } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { openDatabase, type SqliteDatabase } from "../persistence/database.ts";
+import { cleanupFeedback } from "../analytics/feedback.ts";
 import { redactText } from "../security/redaction.ts";
+import { cleanupRateLimits } from "../security/rate-limit.ts";
 
 const MAGIC = Buffer.from("TRIPBAK1");
 const DAY = 86_400_000;
@@ -23,6 +25,8 @@ export interface MaintenanceResult {
   jobs: number;
   shares: number;
   metrics: number;
+  rateLimits: number;
+  feedback: number;
 }
 function record(
   db: SqliteDatabase,
@@ -46,6 +50,7 @@ export function cleanupExpired(
   now = new Date(),
 ): MaintenanceResult {
   return db.transaction(() => {
+    const rateLimits = cleanupRateLimits(db, now);
     const result = {
       jobs: db
         .prepare("DELETE FROM planning_jobs WHERE expires_at <= ?")
@@ -58,6 +63,8 @@ export function cleanupExpired(
       metrics: db
         .prepare("DELETE FROM runtime_metrics WHERE created_at <= ?")
         .run(new Date(now.getTime() - 30 * DAY).toISOString()).changes,
+      rateLimits: rateLimits.counters + rateLimits.salts,
+      feedback: cleanupFeedback(db, now),
     };
     record(db, "cleanup", "completed", JSON.stringify(result), now);
     return result;

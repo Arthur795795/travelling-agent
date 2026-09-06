@@ -1,5 +1,6 @@
 import { changeHttp } from "../../../../../trips/http.ts";
 import { jobRuntime } from "../../../../../jobs/runtime.ts";
+import { decodePathSegment } from "../../../../../routing/path-segment.ts";
 export const runtime = "nodejs";
 export async function POST(
   request: Request,
@@ -8,7 +9,7 @@ export async function POST(
   const r = jobRuntime();
   return changeHttp(r.store, r.executor)(
     request,
-    (await context.params).id,
+    decodePathSegment((await context.params).id),
     "changes",
   );
 }

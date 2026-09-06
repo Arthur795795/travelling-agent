@@ -9,6 +9,7 @@ import {
   DEMO_NOTICE,
 } from "../demo/beijing.ts";
 import { BrowserTripStore } from "../persistence/browser-store.ts";
+import { FeedbackPanel } from "./feedback-panel.tsx";
 import { TripTimeline } from "./trip-timeline.tsx";
 import { TripDetails } from "./trip-details.tsx";
 export default function DemoExperience() {
@@ -67,6 +68,7 @@ export default function DemoExperience() {
       </button>
       <TripDetails trip={trip} />
       <TripTimeline trip={trip} />
+      <FeedbackPanel context="fixed_demo" />
     </>
   );
 }

@@ -1,0 +1,5 @@
+{
+  "status": "no-go",
+  "code": "LIVE_EVAL_DISABLED",
+  "message": "受控联网评测未运行；必须显式启用并提供内部 DeepSeek 测试 Key 与产品高德 Key。"
+}

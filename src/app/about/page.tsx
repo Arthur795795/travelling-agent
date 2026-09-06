@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export default function AboutPage() {
   const info = modelInfo();
   return (
-    <main className="shell">
+    <main className="shell" id="main-content" tabIndex={-1}>
       <h1>关于旅行 Agent</h1>
       <p>
         帮助你整理可核验的中国城市旅行行程。AI

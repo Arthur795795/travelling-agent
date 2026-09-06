@@ -1,0 +1,12 @@
+.git
+.next*
+node_modules
+backups
+data
+output
+test-results
+tests
+*.sqlite*
+*.log
+.env*
+!.env.example

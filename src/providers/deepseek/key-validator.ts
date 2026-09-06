@@ -1,10 +1,17 @@
 import { TransientSecret } from "../../security/secrets.ts";
+import {
+  deepSeekBaseUrl,
+  deepSeekTransport,
+  type DeepSeekFetch,
+  type DeepSeekTransport,
+} from "./network.ts";
 
 export type DeepSeekKeyErrorCode =
   | "invalid_key"
   | "quota_or_permission"
   | "rate_limited"
   | "invalid_request"
+  | "timeout"
   | "network_error"
   | "upstream_error";
 
@@ -16,7 +23,8 @@ export interface DeepSeekKeyValidatorOptions {
   baseUrl?: string;
   model?: string;
   timeoutMs?: number;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: DeepSeekFetch;
+  transport?: DeepSeekTransport;
   onAudit?: (event: DeepSeekKeyValidationAudit) => void;
 }
 
@@ -25,6 +33,18 @@ export interface DeepSeekKeyValidationAudit {
   durationMs: number;
   outcome: "valid" | DeepSeekKeyErrorCode;
   model: string;
+}
+
+export const DEFAULT_DEEPSEEK_KEY_VALIDATION_TIMEOUT_MS = 30_000;
+
+/** Server-only tuning knob. Invalid or unsafe values fall back closed to the default. */
+export function deepSeekKeyValidationTimeoutMs(
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+): number {
+  const parsed = Number(environment.DEEPSEEK_KEY_VALIDATION_TIMEOUT_MS);
+  return Number.isInteger(parsed) && parsed >= 1_000 && parsed <= 120_000
+    ? parsed
+    : DEFAULT_DEEPSEEK_KEY_VALIDATION_TIMEOUT_MS;
 }
 
 function errorResult(
@@ -36,6 +56,8 @@ function errorResult(
     return { ok: false, code: "quota_or_permission", retryable: false };
   if (status === 429)
     return { ok: false, code: "rate_limited", retryable: true };
+  if (status === 408 || status === 504)
+    return { ok: false, code: "timeout", retryable: true };
   if (status === 400 || status === 422)
     return { ok: false, code: "invalid_request", retryable: false };
   return { ok: false, code: "upstream_error", retryable: status >= 500 };
@@ -45,21 +67,30 @@ export async function validateDeepSeekKey(
   secret: TransientSecret,
   options: DeepSeekKeyValidatorOptions = {},
 ): Promise<DeepSeekKeyValidationResult> {
-  const fetchImpl = options.fetchImpl ?? fetch;
   const model = options.model ?? "deepseek-v4-pro";
-  const baseUrl = (
-    options.baseUrl ??
-    process.env.DEEPSEEK_BASE_URL ??
-    "https://api.deepseek.com"
-  ).replace(/\/$/, "");
   const controller = new AbortController();
+  let timedOut = false;
   const timer = setTimeout(
-    () => controller.abort(),
-    options.timeoutMs ?? 6_000,
+    () => {
+      timedOut = true;
+      controller.abort(new Error("timeout"));
+    },
+    options.timeoutMs ?? deepSeekKeyValidationTimeoutMs(),
   );
   const startedAt = Date.now();
   let outcome: DeepSeekKeyValidationAudit["outcome"] = "network_error";
   try {
+    const transport = options.transport ??
+      (options.fetchImpl
+        ? {
+            baseUrl: deepSeekBaseUrl(),
+            proxyConfigured: false,
+            fetch: options.fetchImpl,
+            close: async () => undefined,
+          }
+        : deepSeekTransport());
+    const fetchImpl = transport.fetch;
+    const baseUrl = (options.baseUrl ?? transport.baseUrl).replace(/\/$/, "");
     const response = await secret.use((apiKey) =>
       fetchImpl(`${baseUrl}/responses`, {
         method: "POST",
@@ -67,25 +98,32 @@ export async function validateDeepSeekKey(
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          Accept: "text/event-stream",
         },
         body: JSON.stringify({
           model,
           input: "Reply with OK.",
           max_output_tokens: 1,
-          temperature: 0,
+          reasoning: { effort: "none" },
+          stream: true,
         }),
       }),
     );
     if (!response.ok) {
+      void response.body?.cancel().catch(() => undefined);
       const result = errorResult(response.status);
       outcome = result.code;
       return result;
     }
+    // Authentication, balance, permission and request-shape checks have
+    // succeeded once the streaming response is admitted. The validator does
+    // not retain or expose generated content and closes the one-token body.
+    void response.body?.cancel().catch(() => undefined);
     outcome = "valid";
     return { ok: true, model };
   } catch {
-    outcome = "network_error";
-    return { ok: false, code: "network_error", retryable: true };
+    outcome = timedOut ? "timeout" : "network_error";
+    return { ok: false, code: outcome, retryable: true };
   } finally {
     clearTimeout(timer);
     secret.clear();

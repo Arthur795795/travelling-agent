@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-06T02:24:33.743Z",
+  "decision": "no-go",
+  "reasons": [
+    "controlled_live_evaluation_missing_or_failed",
+    "performance_evidence_missing_or_failed",
+    "real_user_study_missing_or_failed",
+    "deployment_evidence_missing",
+    "compliance_materials_missing"
+  ],
+  "commandResults": [
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "unit",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "integration",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "e2e",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "security",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "fixture-tests",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "live-runner-tests",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "operations",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "name": "fixed-36",
+      "exitCode": 0,
+      "passed": true
+    }
+  ],
+  "evidence": {
+    "commandsPassed": true,
+    "fixedEvaluation": {
+      "sampleCount": 36,
+      "successRate": 1,
+      "averageSoftScore": 86.91,
+      "criticalFailureCount": 0,
+      "passed": true
+    },
+    "liveEvaluationPassed": false,
+    "performancePassed": false,
+    "securityPassed": true,
+    "userStudyPassed": false,
+    "repositoryScanPassed": true,
+    "fiveCityLabelsPresent": true,
+    "aiAndLimitsDisclosurePresent": true,
+    "deploymentEvidencePresent": false,
+    "complianceMaterialsPresent": false
+  },
+  "repositoryScan": {
+    "current": {
+      "passed": true,
+      "credentialCandidateCount": 0,
+      "privateCandidateCount": 0
+    },
+    "gitHistory": {
+      "passed": true,
+      "credentialCandidateCount": 0,
+      "privateCandidateCount": 0
+    }
+  },
+  "note": "报告不包含命令输出、凭据、行程正文、参与者数据或扫描命中内容。"
+}

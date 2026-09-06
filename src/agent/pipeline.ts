@@ -38,6 +38,7 @@ import {
   registerPlatformLinkTool,
 } from "../platform/links.ts";
 import { loadFeatureFlags } from "../config/features.ts";
+import { allowProductCall } from "../security/guard-runtime.ts";
 
 export function createPipeline(
   client: Pick<
@@ -73,32 +74,27 @@ export function createPipeline(
     const flags = loadFeatureFlags();
     const registry = new AgentToolRegistry();
     const amap = new AmapClient();
-    registerAmapPlaceTools(
-      registry,
-      new AmapPlacesAdapter(amap),
-      () => flags.amap,
-    );
-    registerAmapRouteTool(
-      registry,
-      new AmapRoutesAdapter(amap),
-      () => flags.amap,
-    );
-    registerAmapWeatherTool(
-      registry,
-      new AmapWeatherAdapter(amap),
-      () => flags.amap,
-    );
+    // Product-paid tools stay behind their feature flag *and* the shared daily
+    // product quota; an exhausted quota blocks the tool instead of spending.
+    const amapEnabled = () => flags.amap && allowProductCall("amap");
+    registerAmapPlaceTools(registry, new AmapPlacesAdapter(amap), amapEnabled);
+    registerAmapRouteTool(registry, new AmapRoutesAdapter(amap), amapEnabled);
+    registerAmapWeatherTool(registry, new AmapWeatherAdapter(amap), amapEnabled);
     registerPlatformLinkTool(registry, new PlatformLinkGenerator());
     registerSearchEvidenceTools(
       registry,
       async (query, signal) =>
         client.createResponse(ctx.secret(), {
+          instructions:
+            "只搜索与查询直接相关的公开来源，简短概括并保留引用；不要输出详细推理。",
           input: query,
           tools: [{ type: "web_search" }],
+          maxOutputTokens: 2_000,
+          reasoningEffort: "low",
           signal,
         }),
       new OfficialPageEvidenceReader(),
-      () => flags.webSearch,
+      () => flags.webSearch && allowProductCall("search"),
     );
     return (name, args, key, stage) =>
       ctx.once(
@@ -112,6 +108,9 @@ export function createPipeline(
             idempotencyKey: key,
             name,
             arguments: args,
+            // DeepSeek's server-side web search regularly needs more than the
+            // generic 15s tool deadline; other tools retain the tighter cap.
+            timeoutMs: name === "web_search" ? 60_000 : undefined,
             signal: ctx.signal,
           }),
         (r) => r.usageEvents,
@@ -161,6 +160,8 @@ export function createPipeline(
             skeleton: ctx.state.skeleton,
           }),
           textFormat: { type: "json_object" },
+          maxOutputTokens: 8_000,
+          reasoningEffort: "low",
         });
         const plan = EnrichmentPlanSchema.parse(
           JSON.parse(response.outputText),
@@ -208,6 +209,8 @@ export function createPipeline(
                 "只输出修复后的完整 Trip JSON。仅调整问题涉及的日期；禁止修改 brief、锁定项目、evidence、claims，不得编造价格/库存/营业规则。无法修复时保持原状。",
               input: JSON.stringify({ trip, issues }),
               textFormat: { type: "json_object" },
+              maxOutputTokens: 8_000,
+              reasoningEffort: "low",
             });
             return JSON.parse(response.outputText);
           },

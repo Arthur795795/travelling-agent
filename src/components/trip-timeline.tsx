@@ -27,19 +27,31 @@ const modes = {
 };
 export function TripTimeline({ trip }: { trip: Trip }) {
   return (
-    <section aria-label="行程时间线">
-      <p className="eyebrow">AI 辅助生成 · 北京时间</p>
-      <h1>{trip.brief.destination}旅行时间线</h1>
-      <p>
-        {trip.brief.startDate} 至 {trip.brief.endDate}
-      </p>
-      <div className="workspace">
+    <section aria-label="行程时间线" className="itinerary-section">
+      <header className="itinerary-header">
         <div>
-          {trip.days.map((day) => (
+          <p className="eyebrow">你的行程 · 北京时间</p>
+          <h1>{trip.brief.destination}旅行计划</h1>
+          <p>
+            {trip.brief.startDate} 至 {trip.brief.endDate} ·{" "}
+            {trip.brief.party.adults} 位成人
+          </p>
+        </div>
+        <div className="destination-mark" aria-hidden="true">
+          {trip.brief.destination.slice(0, 1)}
+        </div>
+      </header>
+      <div className="workspace itinerary-grid">
+        <div>
+          {trip.days.map((day, dayIndex) => (
             <section key={day.id} className="day">
-              <h2>
-                {day.date} · {day.title}
-              </h2>
+              <header className="day-header">
+                <span>DAY {dayIndex + 1}</span>
+                <div>
+                  <h2>{day.date}</h2>
+                  <p>{day.title.replace(`${trip.brief.destination} · `, "")}</p>
+                </div>
+              </header>
               <ol className="timeline">
                 {[
                   ...day.activities.map((activity) => ({
@@ -58,7 +70,7 @@ export function TripTimeline({ trip }: { trip: Trip }) {
                     if (entry.type === "leg") {
                       const leg = entry.leg;
                       return (
-                        <li className="leg" key={`leg:${leg.id}`}>
+                        <li className="leg timeline-card" key={`leg:${leg.id}`}>
                           <p className="time">
                             {time(leg.departureWindow.start)}–
                             {time(leg.departureWindow.end)}
@@ -72,7 +84,7 @@ export function TripTimeline({ trip }: { trip: Trip }) {
                     }
                     const a = entry.activity;
                     return (
-                      <li key={a.id}>
+                      <li className="timeline-card" key={a.id}>
                         <p className="time">
                           {time(a.timeWindow.start)}–{time(a.timeWindow.end)} ·{" "}
                           {a.durationMinutes} 分钟
@@ -86,10 +98,10 @@ export function TripTimeline({ trip }: { trip: Trip }) {
                               : "备选"}
                         </span>
                         {a.locked && <span className="tag">已锁定</span>}
-                        <p>
+                        <p className="place-line">
                           {a.place.name} · {cost(a.cost)}
                         </p>
-                        <p>{a.rationale}</p>
+                        <p className="muted">{a.rationale}</p>
                       </li>
                     );
                   })}
@@ -103,8 +115,9 @@ export function TripTimeline({ trip }: { trip: Trip }) {
             </section>
           ))}
         </div>
-        <aside>
-          <h2>简化路线总览</h2>
+        <aside className="route-overview">
+          <p className="eyebrow">快速浏览</p>
+          <h2>每日路线</h2>
           {trip.days.map((day) => (
             <section key={day.id}>
               <h3>{day.date}</h3>
@@ -130,7 +143,7 @@ export function TripTimeline({ trip }: { trip: Trip }) {
               ))}
             </section>
           ))}
-          <h2>锁定预订</h2>
+          {trip.lockedBookings.length > 0 && <h2>锁定预订</h2>}
           {trip.lockedBookings.map((b) => (
             <p key={b.id}>
               {b.title} · 已锁定

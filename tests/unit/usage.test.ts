@@ -52,6 +52,7 @@ test("features default off and only explicit true enables them", () => {
 });
 
 test("per-plan limits stop hard overages and warn at the soft model-cost limit", () => {
+  assert.equal(DEFAULT_BUDGET_POLICY.maxOutputTokens, 64_000);
   assert.deepEqual(evaluateUsage(baseUsage), { allowed: true });
   assert.deepEqual(evaluateUsage({ ...baseUsage, visitorModelCostCny: 2 }), {
     allowed: true,

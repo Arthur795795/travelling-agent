@@ -1,0 +1,25 @@
+services:
+  travel-agent:
+    build: .
+    image: travel-agent:local
+    read_only: true
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      SQLITE_PATH: /app/data/travel-agent.sqlite
+      FEATURE_CUSTOM_GENERATION: "false"
+      FEATURE_WEB_SEARCH: "false"
+      FEATURE_AMAP: "false"
+      FEATURE_SHARING: "false"
+      FEATURE_EXPORT: "false"
+      FEATURE_OFFLINE_READONLY: "false"
+    volumes:
+      - travel-agent-data:/app/data
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  travel-agent-data:

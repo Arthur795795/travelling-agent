@@ -157,9 +157,13 @@ test("produces a four-day pending-evidence skeleton and deterministically places
     afternoon: null,
   };
   let requestInput = "";
+  let requestOptions:
+    | { maxOutputTokens?: number; reasoningEffort?: string }
+    | undefined;
   const result = await new SkeletonPlanner(
     model(JSON.stringify(lateArrivalSkeleton), (request) => {
       requestInput = String(request.input);
+      requestOptions = request;
     }),
     now,
   ).plan(new TransientSecret("sk-skeleton-0123456789abcdef"), trip.brief);
@@ -168,6 +172,8 @@ test("produces a four-day pending-evidence skeleton and deterministically places
   assert.equal(result.stageResult.stage, "skeleton_planning");
   assert.equal(result.stageResult.estimatedCostCny, 0.02);
   assert.match(requestInput, /7-12/);
+  assert.equal(requestOptions?.maxOutputTokens, 12_000);
+  assert.equal(requestOptions?.reasoningEffort, "low");
   assert.deepEqual(
     result.skeleton.days[0].lockedBookings.map(({ id }) => id).sort(),
     ["flight-late", "hotel-1"],

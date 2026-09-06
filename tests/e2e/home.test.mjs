@@ -6,6 +6,9 @@ import { executableTrip } from "../fixtures/executable-trip.ts";
 test("home, planning, credentials, progress fallback and mobile timeline work in Chrome", async (t) => {
   const browser = await browserHarness(t);
   const trip = executableTrip();
+  // Production trip ids contain a colon. Next 16 preserves its percent-encoded
+  // form in params, so this guards the browser-store route boundary.
+  trip.id = "trip:fixture-colon-id";
   trip.days[0].legs.push({
     id: "arrival",
     fromPlaceId: "station",
@@ -35,7 +38,7 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
     },
     cost: { kind: "unknown", currency: "CNY", reason: "待确认" },
   });
-  const mock = `(()=>{const original=window.fetch;let status='completed';window.__setStatus=s=>status=s;const trip=${JSON.stringify(trip)};const view=()=>({id:'fixture-job',status,message:status==='completed'?'行程整理完成':status==='cancelled'?'任务已取消':status==='waiting_for_credentials'?'请重新提供 DeepSeek Key 继续':'正在计算路线',sequence:2,usage:{steps:7,searchCalls:0,repairRounds:0,outputTokens:10,visitorModelCostCny:.01,productCostCny:0},trip:status==='completed'?trip:undefined,issues:[],choices:[],model:'deepseek-v4-pro'});window.fetch=async(url,init)=>{const path=String(url);if(path.includes('/api/keys/deepseek/validate'))return Response.json(JSON.parse(init.body).apiKey.includes('bad')?{ok:false}:{ok:true,model:'deepseek-v4-pro'});if(path==='/api/planning-jobs')return Response.json({id:'fixture-job'},{status:202});if(path.includes('/api/planning-jobs/fixture-job')){if(path.endsWith('/events'))return new Response('',{status:503});if(path.endsWith('/cancel'))status='cancelled';if(path.endsWith('/resume'))status='completed';return Response.json(view());}return original(url,init);};})();`;
+  const mock = `(()=>{const original=window.fetch;let status='completed';window.__setStatus=s=>status=s;const trip=${JSON.stringify(trip)};const view=()=>({id:'fixture-job',status,message:status==='completed'?'行程整理完成':status==='cancelled'?'任务已取消':status==='waiting_for_credentials'?'请重新提供 DeepSeek Key 继续':'正在计算路线',sequence:2,usage:{steps:7,searchCalls:0,repairRounds:0,outputTokens:10,visitorModelCostCny:.01,productCostCny:0},trip:status==='completed'?trip:undefined,issues:[],choices:[],model:'deepseek-v4-pro'});window.fetch=async(url,init)=>{const path=String(url);if(path.includes('/api/keys/deepseek/validate')){const key=JSON.parse(init.body).apiKey;if(key.includes('project-rate'))return Response.json({code:'RATE_LIMITED'},{status:429});if(key.includes('upstream-rate'))return Response.json({ok:false,code:'rate_limited',retryable:true},{status:429});if(key.includes('bad'))return Response.json({ok:false,code:'invalid_key',retryable:false},{status:401});return Response.json({ok:true,model:'deepseek-v4-pro'});}if(path==='/api/planning-jobs')return Response.json({id:'fixture-job'},{status:202});if(path.includes('/api/planning-jobs/fixture-job')){if(path.endsWith('/events'))return new Response('',{status:503});if(path.endsWith('/cancel'))status='cancelled';if(path.endsWith('/resume'))status='completed';return Response.json(view());}return original(url,init);};})();`;
   await browser.cdp("Page.addScriptToEvaluateOnNewDocument", { source: mock });
   await browser.goto("/");
   assert.ok(await browser.contains("不代订"));
@@ -75,7 +78,13 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
   );
   await browser.fill("DeepSeek Key", "sk-bad-0123456789abcdef");
   await browser.click("验证 Key");
-  await waitFor(() => browser.contains("验证失败"));
+  await waitFor(() => browser.contains("Key 无效"));
+  await browser.fill("DeepSeek Key", "sk-upstream-rate-0123456789");
+  await browser.click("验证 Key");
+  await waitFor(() => browser.contains("DeepSeek 当前限流"));
+  await browser.fill("DeepSeek Key", "sk-project-rate-0123456789");
+  await browser.click("验证 Key");
+  await waitFor(() => browser.contains("本项目的 Key 验证次数已达上限"));
   await browser.fill("DeepSeek Key", "sk-good-0123456789abcdef");
   await browser.click("验证 Key");
   await waitFor(() => browser.contains("已连接"));
@@ -85,6 +94,12 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
       `document.querySelector('input[type=password]').value`,
     ),
     "",
+  );
+  assert.equal(
+    await browser.evaluate(
+      `JSON.stringify(sessionStorage).includes('sk-good')`,
+    ),
+    false,
   );
   await browser.evaluate(
     `(()=>{const previous=window.fetch;window.fetch=(url,init)=>String(url).includes('/api/keys/deepseek/validate')?new Promise(resolve=>{window.__finishValidation=()=>{window.fetch=previous;resolve(Response.json({ok:true,model:'deepseek-v4-pro'}));};}):previous(url,init);})()`,
@@ -104,6 +119,8 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
     true,
   );
   await browser.fill("DeepSeek Key", "sk-good-0123456789abcdef");
+  await browser.click("验证 Key");
+  await waitFor(() => browser.contains("已连接"));
   const origin = await browser.evaluate("performance.timeOrigin");
   await browser.cdp("Page.reload");
   await waitFor(() =>
@@ -116,20 +133,24 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
     await browser.evaluate(
       `document.querySelector('input[type=password]').value`,
     ),
-    "",
+    "sk-good-0123456789abcdef",
   );
+  assert.ok(await browser.contains("已连接"));
   await fillBrief();
-  await browser.fill("DeepSeek Key", "sk-good-0123456789abcdef");
-  await browser.click("验证 Key");
-  await waitFor(() => browser.contains("已连接"));
   await browser.click("开始规划");
   await waitFor(() => browser.contains("查看行程时间线"));
   assert.equal(
     await browser.evaluate(`JSON.stringify(localStorage).includes('sk-good')`),
     false,
   );
+  assert.equal(
+    await browser.evaluate(
+      `JSON.stringify(sessionStorage).includes('sk-good')`,
+    ),
+    true,
+  );
   await browser.click("查看行程时间线");
-  await waitFor(() => browser.contains("北京旅行时间线"));
+  await waitFor(() => browser.contains("北京旅行计划"));
   assert.ok(await browser.contains("费用待确认"));
   assert.ok(await browser.contains("已锁定"));
   const text = await browser.evaluate(
@@ -157,7 +178,12 @@ test("home, planning, credentials, progress fallback and mobile timeline work in
   });
   await browser.goto("/planning/fixture-job");
   await waitFor(() => browser.contains("重新提供 DeepSeek Key"));
-  await browser.fill("恢复 Key", "sk-good-0123456789abcdef");
+  assert.equal(
+    await browser.evaluate(
+      `document.querySelector('[aria-label="恢复 Key"]').value`,
+    ),
+    "sk-good-0123456789abcdef",
+  );
   await browser.click("继续规划");
   await waitFor(() => browser.contains("查看行程时间线"));
   await browser.cdp("Page.addScriptToEvaluateOnNewDocument", {

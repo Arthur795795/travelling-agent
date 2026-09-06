@@ -66,6 +66,14 @@ export type SearchCandidate = z.infer<
 >["candidate"];
 type SourceType = Evidence["sourceType"];
 
+function stablePageId(value: string): string {
+  const digest = createHash("sha256")
+    .update(value)
+    .digest("hex")
+    .slice(0, 24);
+  return `page:${digest.match(/.{1,4}/g)!.join("-")}`;
+}
+
 const PLATFORM_HOSTS = [
   "ctrip.com",
   "trip.com",
@@ -204,7 +212,9 @@ export class OfficialPageEvidenceReader {
   ): Promise<PageEvidenceResult> {
     const query = OfficialPageToolInputSchema.parse(input);
     const evidenceBase = {
-      id: `page:${createHash("sha256").update(`${query.subjectId}|${query.field}|${query.candidate.url}|${this.now().toISOString()}`).digest("hex").slice(0, 24)}`,
+      id: stablePageId(
+        `${query.subjectId}|${query.field}|${query.candidate.url}|${this.now().toISOString()}`,
+      ),
       sourceType: query.candidate.sourceType,
       sourceName: query.candidate.title,
       url: query.candidate.url,

@@ -18,6 +18,15 @@
     "test:eval:fixtures": "node --test --experimental-strip-types tests/eval/fixtures/*.test.ts",
     "test:eval:live": "node --test --experimental-strip-types tests/eval/live/*.test.ts",
     "test:security": "node --test --experimental-strip-types tests/security/*.test.ts",
+    "test:operations": "node --test --experimental-strip-types tests/operations/*.test.ts tests/user-study/*.test.ts tests/release/*.test.ts",
+    "test:docker": "node --experimental-strip-types scripts/docker-smoke.ts",
+    "eval:fixtures": "node --experimental-strip-types scripts/eval-fixtures.ts",
+    "eval:smoke": "EVAL_SUITE=model-smoke EVAL_REPORT_PATH=reports/model-smoke.json node --experimental-strip-types scripts/eval-fixtures.ts",
+    "eval:live": "node --experimental-strip-types scripts/eval-live.ts",
+    "performance:report": "node --experimental-strip-types scripts/performance-report.ts",
+    "model:regression": "node --experimental-strip-types scripts/model-regression.ts",
+    "user-study:report": "node --experimental-strip-types scripts/user-study-report.ts",
+    "release:check": "node --experimental-strip-types scripts/release-check.ts",
     "maintenance": "node --experimental-strip-types scripts/maintenance.ts"
   },
   "dependencies": {
@@ -25,6 +34,7 @@
     "next": "^16.3.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "undici": "^7.29.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

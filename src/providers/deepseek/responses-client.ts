@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { TransientSecret } from "../../security/secrets.ts";
+import {
+  deepSeekBaseUrl,
+  deepSeekTransport,
+  type DeepSeekFetch,
+  type DeepSeekTransport,
+} from "./network.ts";
 
 export type DeepSeekResponseErrorCode =
   | "invalid_key"
@@ -126,11 +132,24 @@ export const DEFAULT_DEEPSEEK_PRICING_CNY: DeepSeekPricingCny = {
   outputPerMillion: 6.264,
 };
 
+export const DEFAULT_DEEPSEEK_RESPONSE_TIMEOUT_MS = 300_000;
+
+/** Server-only model-call deadline, kept below the overall planning deadline. */
+export function deepSeekResponseTimeoutMs(
+  environment: Readonly<Record<string, string | undefined>> = process.env,
+): number {
+  const parsed = Number(environment.DEEPSEEK_RESPONSE_TIMEOUT_MS);
+  return Number.isInteger(parsed) && parsed >= 30_000 && parsed <= 600_000
+    ? parsed
+    : DEFAULT_DEEPSEEK_RESPONSE_TIMEOUT_MS;
+}
+
 export interface DeepSeekResponsesClientOptions {
   baseUrl?: string;
   model?: string;
   timeoutMs?: number;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: DeepSeekFetch;
+  transport?: DeepSeekTransport;
   pricing?: DeepSeekPricingCny;
 }
 
@@ -329,19 +348,24 @@ async function* ssePayloads(
 
 export class DeepSeekResponsesClient {
   private readonly options: Required<
-    Omit<DeepSeekResponsesClientOptions, "fetchImpl">
-  > & { fetchImpl: typeof fetch };
+    Omit<DeepSeekResponsesClientOptions, "fetchImpl" | "transport">
+  > & { fetchImpl: DeepSeekFetch };
 
   constructor(options: DeepSeekResponsesClientOptions = {}) {
+    const transport = options.transport ??
+      (options.fetchImpl
+        ? {
+            baseUrl: deepSeekBaseUrl(),
+            proxyConfigured: false,
+            fetch: options.fetchImpl,
+            close: async () => undefined,
+          }
+        : deepSeekTransport());
     this.options = {
-      baseUrl: (
-        options.baseUrl ??
-        process.env.DEEPSEEK_BASE_URL ??
-        "https://api.deepseek.com"
-      ).replace(/\/$/, ""),
+      baseUrl: (options.baseUrl ?? transport.baseUrl).replace(/\/$/, ""),
       model: options.model ?? "deepseek-v4-pro",
-      timeoutMs: options.timeoutMs ?? 150_000,
-      fetchImpl: options.fetchImpl ?? fetch,
+      timeoutMs: options.timeoutMs ?? deepSeekResponseTimeoutMs(),
+      fetchImpl: transport.fetch,
       pricing: options.pricing ?? DEFAULT_DEEPSEEK_PRICING_CNY,
     };
   }
@@ -389,7 +413,10 @@ export class DeepSeekResponsesClient {
           }),
         }),
       );
-      if (!response.ok) throw errorForStatus(response.status);
+      if (!response.ok) {
+        void response.body?.cancel().catch(() => undefined);
+        throw errorForStatus(response.status);
+      }
       if (!response.body)
         throw new DeepSeekResponseError(
           "invalid_stream",

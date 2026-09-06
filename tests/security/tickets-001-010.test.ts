@@ -26,4 +26,9 @@ test("environment example contains placeholders and no usable credentials", asyn
     "utf8",
   );
   assert.equal(/(?:sk|ds)-[A-Za-z0-9_-]{12,}/.test(env), false);
+  assert.match(env, /^DEEPSEEK_HTTPS_PROXY=$/m);
+  assert.doesNotMatch(env, /DEEPSEEK_HTTPS_PROXY=.*(?:@|127\.0\.0\.1)/);
+  assert.match(env, /^AMAP_HTTPS_PROXY=$/m);
+  assert.doesNotMatch(env, /AMAP_HTTPS_PROXY=.*(?:@|127\.0\.0\.1)/);
+  assert.doesNotMatch(env, /NODE_TLS_REJECT_UNAUTHORIZED/);
 });

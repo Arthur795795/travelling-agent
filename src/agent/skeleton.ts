@@ -322,13 +322,16 @@ export class SkeletonPlanner {
         "锁定预订由系统确定性合并，不要修改。",
       ].join("\n"),
       input: JSON.stringify(requestContext),
-      maxOutputTokens: 8_000,
+      // Real V4 Pro runs have reached ~7.7k total output tokens because
+      // reasoning shares this budget. Leave room for the structured answer
+      // while using light reasoning for this constrained transformation.
+      maxOutputTokens: 12_000,
       textFormat: {
         type: "json_schema",
         name: "itinerary_skeleton",
         schema: SKELETON_JSON_SCHEMA,
       },
-      reasoningEffort: "high",
+      reasoningEffort: "low",
     });
     if (UNSAFE_FACT_CLAIM.test(response.outputText)) {
       throw new SkeletonPlanningError(

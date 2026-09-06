@@ -17,7 +17,7 @@ test("enrichment builds a complete dated draft while failed sources, routes and 
   const skeleton = {
     days: dates.map((date) => ({ date })),
     disclosedDefaults: ["适中密度"],
-  } as ItinerarySkeleton;
+  } as unknown as ItinerarySkeleton;
   const plan: EnrichmentPlan = {
     days: dates.map((date, i) => ({
       date,
@@ -230,4 +230,123 @@ test("verified simple rules and route results produce a traceable draft, while c
       assert.deepEqual(validateTrip(result), []);
     }
   }
+});
+
+test("a unique exact Amap match resolves among nearby candidates and transfer placeholders are omitted", async () => {
+  const brief = executableTrip().brief;
+  const dates = ["2026-10-01", "2026-10-02", "2026-10-03"];
+  const skeleton = {
+    days: dates.map((date) => ({ date })),
+    disclosedDefaults: [],
+  } as unknown as ItinerarySkeleton;
+  const plan: EnrichmentPlan = {
+    days: dates.map((date, index) => ({
+      date,
+      notes: [],
+      activities: [
+        ...(index === 0
+          ? [
+              {
+                id: "arrival-transfer",
+                title: "城际交通：抵达北京",
+                keyword: "上海至北京",
+                city: "北京",
+                start: `${date}T07:00:00+08:00`,
+                end: `${date}T08:00:00+08:00`,
+                durationMinutes: 60,
+                importance: "core" as const,
+                rationale: "抵达城市",
+                fallbackKeyword: "车站",
+              },
+            ]
+          : []),
+        {
+          id: `place-${index}`,
+          title: "故宫博物院",
+          keyword: "故宫博物院",
+          city: "北京",
+          start: `${date}T09:00:00+08:00`,
+          end: `${date}T11:00:00+08:00`,
+          durationMinutes: 120,
+          importance: "core" as const,
+          rationale: "历史文化",
+          fallbackKeyword: "景山公园",
+        },
+      ],
+    })),
+  };
+  const called: string[] = [];
+  const call: ToolCaller = async (name, args, key, stage) => {
+    called.push(`${name}:${key}`);
+    const input = args as Record<string, unknown>;
+    let data: unknown;
+    if (name === "search_places")
+      data = {
+        candidates: [
+          {
+            amapId: "exact",
+            place: {
+              id: "amap:exact",
+              name: "故宫博物院",
+              city: "北京市",
+              source: "amap",
+            },
+          },
+          {
+            amapId: "nearby-1",
+            place: {
+              id: "amap:nearby-1",
+              name: "故宫角楼",
+              city: "北京",
+              source: "amap",
+            },
+          },
+          {
+            amapId: "nearby-2",
+            place: {
+              id: "amap:nearby-2",
+              name: "故宫停车场",
+              city: "北京",
+              source: "amap",
+            },
+          },
+        ],
+      };
+    if (name === "get_place_details")
+      data = {
+        amapId: input.amapId,
+        checkedAt: "2026-09-05T00:00:00Z",
+        adcode: "110000",
+        cityCode: "010",
+        place: {
+          id: "amap:exact",
+          name: "故宫博物院",
+          address: "东城区",
+          city: "北京",
+          source: "amap",
+          longitude: 116.397,
+          latitude: 39.918,
+        },
+      };
+    if (name === "web_search") data = { candidates: [] };
+    return {
+      jobId: "test",
+      name,
+      stage,
+      callId: key,
+      idempotencyKey: key,
+      status: data ? "success" : "blocked",
+      data,
+      evidenceIds: [],
+      durationMs: 0,
+      usageEvents: [],
+    };
+  };
+
+  const draft = await collectEvidence(brief, skeleton, plan, call, "trip-exact");
+  assert.equal(draft.days[0].activities.length, 1);
+  assert.equal(draft.days[0].activities[0].place.id, "amap:exact");
+  assert.equal(draft.alerts.some((alert) => alert.code === "PLACE_UNRESOLVED"), false);
+  assert.equal(called.some((item) => item.includes("arrival-transfer")), false);
+  assert.ok(draft.days[0].notes.some((note) => note.includes("城际抵达或返程")));
 });

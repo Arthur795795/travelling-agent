@@ -1,0 +1,757 @@
+{
+  "schemaVersion": 1,
+  "mode": "fixture",
+  "generatedAt": "2026-09-06T02:24:33.666Z",
+  "model": "deepseek-v4-pro",
+  "responseVersion": "fixtures-v1",
+  "caseCount": 12,
+  "sampleCount": 36,
+  "passedSamples": 36,
+  "successRate": 1,
+  "averageSoftScore": 86.91,
+  "criticalFailureCount": 0,
+  "gate": {
+    "passed": true,
+    "reasons": []
+  },
+  "runs": [
+    {
+      "caseId": "eval-beijing-baseline",
+      "title": "北京基础四日",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:1:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-baseline",
+      "title": "北京基础四日",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:1:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-baseline",
+      "title": "北京基础四日",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:1:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-child",
+      "title": "北京亲子",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:2:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-child",
+      "title": "北京亲子",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:2:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-child",
+      "title": "北京亲子",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:2:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-senior",
+      "title": "北京老人同行",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:3:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-senior",
+      "title": "北京老人同行",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:3:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-senior",
+      "title": "北京老人同行",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:3:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-budget",
+      "title": "北京严格预算",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:4:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-budget",
+      "title": "北京严格预算",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:4:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-budget",
+      "title": "北京严格预算",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:4:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-rain",
+      "title": "北京雨天调整",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:5:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-rain",
+      "title": "北京雨天调整",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:5:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-rain",
+      "title": "北京雨天调整",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:5:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-closure",
+      "title": "北京闭馆冲突",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:6:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-closure",
+      "title": "北京闭馆冲突",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:6:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-closure",
+      "title": "北京闭馆冲突",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:6:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-late",
+      "title": "北京晚抵达",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:7:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-late",
+      "title": "北京晚抵达",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:7:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-late",
+      "title": "北京晚抵达",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:7:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-locked",
+      "title": "北京锁定预订",
+      "city": "北京",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:8:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-locked",
+      "title": "北京锁定预订",
+      "city": "北京",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:8:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-beijing-locked",
+      "title": "北京锁定预订",
+      "city": "北京",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:8:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-shanghai-source",
+      "title": "上海来源故障",
+      "city": "上海",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:9:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "SOURCE_UNAVAILABLE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-shanghai-source",
+      "title": "上海来源故障",
+      "city": "上海",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:9:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "SOURCE_UNAVAILABLE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-shanghai-source",
+      "title": "上海来源故障",
+      "city": "上海",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:9:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "SOURCE_UNAVAILABLE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-chongqing-senior",
+      "title": "重庆老人同行",
+      "city": "重庆",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:10:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-chongqing-senior",
+      "title": "重庆老人同行",
+      "city": "重庆",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:10:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-chongqing-senior",
+      "title": "重庆老人同行",
+      "city": "重庆",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:10:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 85.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-xian-closure",
+      "title": "西安闭馆调整",
+      "city": "西安",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:11:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-xian-closure",
+      "title": "西安闭馆调整",
+      "city": "西安",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:11:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-xian-closure",
+      "title": "西安闭馆调整",
+      "city": "西安",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:11:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 84.3,
+      "criticalFailures": [],
+      "publicStatus": "明确阻塞并保留可用部分",
+      "codes": [
+        "OFFICIAL_CLOSURE"
+      ],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-hangzhou-rain",
+      "title": "杭州亲子雨天",
+      "city": "杭州",
+      "repeat": 1,
+      "seed": "travel-agent-fixed:12:1",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-hangzhou-rain",
+      "title": "杭州亲子雨天",
+      "city": "杭州",
+      "repeat": 2,
+      "seed": "travel-agent-fixed:12:2",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    },
+    {
+      "caseId": "eval-hangzhou-rain",
+      "title": "杭州亲子雨天",
+      "city": "杭州",
+      "repeat": 3,
+      "seed": "travel-agent-fixed:12:3",
+      "responseVersion": "fixtures-v1",
+      "passed": true,
+      "softScore": 88.45,
+      "criticalFailures": [],
+      "publicStatus": "固定响应校验完成",
+      "codes": [],
+      "durationMs": 1200,
+      "usage": {
+        "inputTokens": 800,
+        "outputTokens": 1200,
+        "visitorCostCny": 0.08,
+        "productCostCny": 0.01
+      }
+    }
+  ]
+}

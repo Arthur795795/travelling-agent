@@ -1,6 +1,6 @@
 export default function HomePage() {
   return (
-    <main className="shell hero">
+    <main className="shell hero" id="main-content" tabIndex={-1}>
       <p className="eyebrow">城市自由行 · 旅行 Agent</p>
       <h1>
         让想去的地方，

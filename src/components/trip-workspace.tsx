@@ -2,16 +2,29 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Trip } from "../domain/schema.ts";
+import { reportEvent } from "../analytics/client.ts";
+import { describeField } from "../a11y/fields.ts";
 import { BrowserTripStore } from "../persistence/browser-store.ts";
+import {
+  OFFLINE_DISABLED_NOTICE,
+  OFFLINE_MAJOR_CHANGE_NOTICE,
+} from "../offline/shell.ts";
 import {
   commitChange,
   previewChange,
   type TripChange,
 } from "../trips/changes.ts";
+import { FeedbackPanel } from "./feedback-panel.tsx";
 import { TripTimeline } from "./trip-timeline.tsx";
 import { TripDetails } from "./trip-details.tsx";
 import { TripTransfer } from "./trip-transfer.tsx";
+import { useOfflineNow } from "./use-offline-now.ts";
 import { moneyText } from "../trips/presentation.ts";
+import {
+  clearDeepSeekSession,
+  readDeepSeekSession,
+  rememberDeepSeekSession,
+} from "../security/deepseek-session.ts";
 export default function TripWorkspace({ id }: { id: string }) {
   const [trip, setTrip] = useState<Trip | null>();
   const [message, setMessage] = useState("");
@@ -39,15 +52,21 @@ export default function TripWorkspace({ id }: { id: string }) {
   return (
     <>
       <TripDetails trip={trip} />
-      <TripTimeline trip={trip} />
-      <TripEditor
-        key={`${id}:${trip.version}`}
-        trip={trip}
-        onSave={setTrip}
-        onMessage={setMessage}
-      />
-      <p role="alert">{message}</p>
       <TripTransfer trip={trip} />
+      <TripTimeline trip={trip} />
+      <details className="editor-disclosure">
+        <summary>编辑、锁定或局部调整行程</summary>
+        <TripEditor
+          key={`${id}:${trip.version}`}
+          trip={trip}
+          onSave={setTrip}
+          onMessage={setMessage}
+        />
+      </details>
+      <p role="alert" id="trip-edit-error">
+        {message}
+      </p>
+      <FeedbackPanel context="generated_trip" />
     </>
   );
 }
@@ -61,6 +80,7 @@ function TripEditor({
   onMessage: (message: string) => void;
 }) {
   const router = useRouter();
+  const offline = useOfflineNow();
   const [date, setDate] = useState(trip.days[0].date),
     [note, setNote] = useState(trip.days[0].notes.join("\n"));
   const [activityId, setActivityId] = useState(
@@ -80,6 +100,21 @@ function TripEditor({
     ReturnType<typeof previewChange> & { confirmation: string }
   >();
   const [busy, setBusy] = useState(false);
+  // A rejected edit marks the fields it came from. The explanation itself is
+  // rendered once by the workspace alert, and every marked field points there.
+  const [invalid, setInvalid] = useState("");
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      const remembered = readDeepSeekSession(sessionStorage);
+      if (active && remembered) setKey(remembered.apiKey);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const describe = (...kinds: string[]) =>
+    describeField([kinds.includes(invalid) && "trip-edit-error"]);
   const store = () => new BrowserTripStore(localStorage);
   const lockable: {
     id: string;
@@ -112,10 +147,18 @@ function TripEditor({
   ];
   async function propose(change: TripChange) {
     onMessage("");
+    setInvalid("");
     setBusy(true);
     try {
       const result = previewChange(trip, change);
       if (result.major) {
+        // A major change is decided by the server, so offline it is refused
+        // outright instead of being reported as a generic failed save.
+        if (offline) {
+          setInvalid(change.type);
+          onMessage(OFFLINE_MAJOR_CHANGE_NOTICE);
+          return;
+        }
         const r = await fetch(
           `/api/trips/${encodeURIComponent(trip.id)}/change-preview`,
           {
@@ -131,7 +174,15 @@ function TripEditor({
         store().commitEdit(applied.trip, applied.revision, trip.version);
         onSave(applied.trip);
       }
+      // Shape only: which kind of edit, and whether it needed a preview.
+      reportEvent({
+        name: "trip_edited",
+        kind: change.type,
+        major: result.major,
+        outcome: "ok",
+      });
     } catch {
+      setInvalid(change.type);
       onMessage("修改未保存：请检查时间、锁定项或版本是否已变化。");
     } finally {
       setBusy(false);
@@ -139,6 +190,7 @@ function TripEditor({
   }
   async function confirm() {
     if (!preview) return;
+    setInvalid("");
     setBusy(true);
     try {
       if (store().loadTrip(trip.id)?.version !== trip.version)
@@ -158,11 +210,16 @@ function TripEditor({
       );
       if (!r.ok) throw new Error();
       const job = await r.json();
+      if (key)
+        rememberDeepSeekSession(sessionStorage, {
+          apiKey: key,
+          model: "deepseek-v4-pro",
+        });
       router.push(`/planning/${encodeURIComponent(job.id)}`);
     } catch {
+      setInvalid("replan-key");
       onMessage("未启动重规划：请先解锁冲突项目，或检查功能开关与当前版本。");
     } finally {
-      setKey("");
       setBusy(false);
     }
   }
@@ -170,6 +227,11 @@ function TripEditor({
     <section>
       <h2>编辑行程 · 版本 {trip.version}</h2>
       <p>仅保存在当前浏览器；共享设备使用后请清除。重大修改需要先预览。</p>
+      {offline && (
+        <p role="note" id="offline-editor-reason">
+          {OFFLINE_DISABLED_NOTICE}
+        </p>
+      )}
       <label>
         编辑日期
         <select
@@ -183,6 +245,7 @@ function TripEditor({
                 .notes.join("\n"),
             );
           }}
+          {...describe("note", "move")}
         >
           {trip.days.map((d) => (
             <option key={d.id}>{d.date}</option>
@@ -195,6 +258,7 @@ function TripEditor({
           aria-label="私人备注"
           value={note}
           onChange={(e) => setNote(e.target.value)}
+          {...describe("note")}
         />
       </label>
       <button
@@ -233,6 +297,7 @@ function TripEditor({
           type="datetime-local"
           value={start}
           onChange={(e) => setStart(e.target.value)}
+          {...describe("activity", "move")}
         />
       </label>
       <label>
@@ -242,6 +307,7 @@ function TripEditor({
           type="datetime-local"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
+          {...describe("activity", "move")}
         />
       </label>
       {activity && (
@@ -318,6 +384,7 @@ function TripEditor({
           type="number"
           value={limit}
           onChange={(e) => setLimit(e.target.value)}
+          {...describe("budget")}
         />
       </label>
       <button
@@ -342,10 +409,12 @@ function TripEditor({
           aria-label="局部重规划要求"
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
+          {...describe("replan")}
         />
       </label>
       <button
-        disabled={!instruction || busy}
+        disabled={!instruction || busy || offline}
+        aria-describedby={offline ? "offline-editor-reason" : undefined}
         onClick={() => propose({ type: "replan", date, instruction })}
       >
         预览局部重规划
@@ -367,12 +436,18 @@ function TripEditor({
             <input
               type="password"
               autoComplete="off"
+              aria-label="重规划 Key"
               value={key}
-              onChange={(e) => setKey(e.target.value)}
+              onChange={(e) => {
+                clearDeepSeekSession(sessionStorage);
+                setKey(e.target.value);
+              }}
+              {...describe("replan-key")}
             />
           </label>
           <button
-            disabled={busy || !!preview.lockConflicts.length}
+            disabled={busy || !!preview.lockConflicts.length || offline}
+            aria-describedby={offline ? "offline-editor-reason" : undefined}
             onClick={confirm}
           >
             确认并局部重规划
@@ -380,7 +455,6 @@ function TripEditor({
           <button
             onClick={() => {
               setPreview(undefined);
-              setKey("");
             }}
           >
             取消修改
@@ -389,9 +463,12 @@ function TripEditor({
       )}
       <button
         onClick={() => {
+          onMessage("");
+          setInvalid("");
           try {
             onSave(store().undoLast(trip.id));
           } catch {
+            setInvalid("undo");
             onMessage("没有可撤销的最近修改。");
           }
         }}

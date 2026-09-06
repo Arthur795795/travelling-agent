@@ -14,6 +14,9 @@ import { PLANNING_STAGES } from "../../src/jobs/lifecycle.ts";
 import { createJobHttp } from "../../src/jobs/http.ts";
 import { TransientSecret } from "../../src/security/secrets.ts";
 import { executableTrip } from "../fixtures/executable-trip.ts";
+import { validateDeepSeekKey } from "../../src/providers/deepseek/key-validator.ts";
+import { localGenerationReadiness } from "../../src/config/generation-readiness.ts";
+import { loadFeatureFlags } from "../../src/config/features.ts";
 const now = () => new Date("2026-09-05T00:00:00Z");
 function handlers(counter: { calls: number }): StageHandlers {
   return Object.fromEntries(
@@ -255,4 +258,71 @@ test("HTTP authorization, create, polling, SSE cursor, resume and idempotent can
     cancelled.job.id,
   );
   assert.equal(store.view(cancelled.job.id).status, "cancelled");
+});
+
+test("a validated Key can create a job, while missing Amap configuration creates nothing", async (t) => {
+  const db = openDatabase();
+  t.after(() => db.close());
+  const store = new ExecutionStore(db, now);
+  const counter = { calls: 0 };
+  const executor = new PlanningExecutor(store, handlers(counter), now);
+  const { schemaVersion: _, timeZone: __, ...input } = executableTrip().brief;
+  void _;
+  void __;
+  const rawKey = "sk-good-0123456789abcdef";
+  assert.deepEqual(
+    await validateDeepSeekKey(new TransientSecret(rawKey), {
+      fetchImpl: async () => new Response(null, { status: 200 }),
+    }),
+    { ok: true, model: "deepseek-v4-pro" },
+  );
+  const request = () =>
+    new Request("http://localhost/api/planning-jobs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ input, apiKey: rawKey }),
+    });
+  let readiness = localGenerationReadiness(
+    loadFeatureFlags({
+      FEATURE_CUSTOM_GENERATION: "true",
+      FEATURE_AMAP: "true",
+      FEATURE_WEB_SEARCH: "true",
+    }),
+    {},
+  );
+  const api = createJobHttp(store, executor, () => true, now, () => readiness);
+  const blocked = await api.create(request());
+  assert.equal(blocked.status, 503);
+  assert.deepEqual(await blocked.json(), {
+    code: "AMAP_KEY_MISSING",
+    message: "服务端尚未配置高德 Key，当前不能开始真实规划。",
+  });
+  assert.equal(counter.calls, 0);
+  const count = db
+    .prepare("SELECT COUNT(*) AS count FROM planning_jobs")
+    .get() as { count: number };
+  assert.equal(
+    count.count,
+    0,
+  );
+  readiness = localGenerationReadiness(
+    loadFeatureFlags({
+      FEATURE_CUSTOM_GENERATION: "true",
+      FEATURE_AMAP: "true",
+      FEATURE_WEB_SEARCH: "true",
+    }),
+    { AMAP_WEB_SERVICE_KEY: "server-only-fixture" },
+  );
+  const created = await api.create(request());
+  assert.equal(created.status, 202);
+  const body = await created.json();
+  await executor.run(body.id);
+  assert.equal(store.view(body.id).status, "completed");
+  assert.equal(counter.calls, 1);
+  assert.equal(
+    JSON.stringify(db.prepare("SELECT * FROM planning_jobs").all()).includes(
+      rawKey,
+    ),
+    false,
+  );
 });

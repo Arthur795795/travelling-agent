@@ -104,7 +104,7 @@ test("chat blocks sensitive values without rejecting ordinary travel facts", () 
   }
 });
 
-test("machine UUIDs are not mistaken for payment card numbers", () => {
+test("machine UUIDs and hashes are not mistaken for personal numbers", () => {
   assert.equal(
     findSensitiveData("550e8400-e29b-41d4-a716-446655440000"),
     undefined,
@@ -114,6 +114,31 @@ test("machine UUIDs are not mistaken for payment card numbers", () => {
     undefined,
   );
   assert.equal(findSensitiveData("6222-0212-3456-7890"), "payment");
+  assert.equal(
+    findSensitiveData("550e8400-e29b-41d4-a716-13800138000a"),
+    undefined,
+  );
+  assert.equal(
+    findSensitiveData("claim:abcd-1380-0138-000a-bcde-1234"),
+    undefined,
+  );
+  assert.equal(
+    findSensitiveData(
+      "abcdef110101199001011234b0123456789abcdef0123456789abcdef0123" +
+        "abc",
+    ),
+    undefined,
+  );
+  assert.equal(
+    findSensitiveData(
+      "abcdef6222021234567890b0123456789abcdef0123456789abcdef012345" +
+        "abc",
+    ),
+    undefined,
+  );
+  assert.equal(findSensitiveData("手机号 13800138000"), "phone");
+  assert.equal(findSensitiveData("身份证 110101199001011234"), "identity");
+  assert.equal(findSensitiveData("银行卡 6222021234567890"), "payment");
 });
 
 test("server environment helper fails safely without exposing values", () => {

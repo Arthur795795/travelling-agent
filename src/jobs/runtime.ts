@@ -7,6 +7,9 @@ import { PlanningExecutor } from "./executor.ts";
 import { createPipeline } from "../agent/pipeline.ts";
 import { createJobHttp } from "./http.ts";
 import { loadFeatureFlags } from "../config/features.ts";
+import { localGenerationReadiness } from "../config/generation-readiness.ts";
+import { recordEvent } from "../analytics/runtime.ts";
+import { recordProductSpend } from "../security/guard-runtime.ts";
 function initialize() {
   const store = new ExecutionStore(applicationDatabase());
   const normal = createPipeline(),
@@ -21,12 +24,21 @@ function initialize() {
       },
     ]),
   ) as StageHandlers;
-  const executor = new PlanningExecutor(store, handlers);
+  const executor = new PlanningExecutor(
+    store,
+    handlers,
+    undefined,
+    undefined,
+    (amountCny) => recordProductSpend(amountCny),
+    (event) => recordEvent(event),
+  );
   for (const id of store.recover()) void executor.run(id);
   const http = createJobHttp(
     store,
     executor,
     () => loadFeatureFlags().customGeneration,
+    undefined,
+    () => localGenerationReadiness(loadFeatureFlags()),
   );
   return { store, executor, http };
 }

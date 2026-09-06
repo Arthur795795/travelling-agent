@@ -63,6 +63,44 @@ const unknownCost = (reason: string): Money => ({
 const object = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
+const comparable = (value: unknown): string =>
+  typeof value === "string"
+    ? value.toLocaleLowerCase().replace(/[\s·•()（）\-—_]/g, "").replace(/市$/, "")
+    : "";
+
+/** Resolve only a unique exact name/city match; broad results stay ambiguous. */
+function exactPlaceCandidate(
+  candidates: unknown[],
+  keyword: string,
+  city: string,
+): Record<string, unknown> | undefined {
+  if (candidates.length === 1) return object(candidates[0]);
+  const keywordKey = comparable(keyword);
+  const cityKey = comparable(city);
+  const exact = candidates
+    .map(object)
+    .filter((candidate) => {
+      const place = object(candidate.place);
+      return (
+        comparable(place.name) === keywordKey && comparable(place.city) === cityKey
+      );
+    });
+  return exact.length === 1 ? exact[0] : undefined;
+}
+
+function isTransferPlaceholder(
+  candidate: EnrichmentPlan["days"][number]["activities"][number],
+  brief: TripBrief,
+): boolean {
+  const city = comparable(candidate.city);
+  const supportedCities = new Set([
+    comparable(brief.destination),
+    ...brief.dayTrips.map((trip) => comparable(trip.destination)),
+  ]);
+  if (!supportedCities.has(city)) return true;
+  return /^(?:城际交通|抵达|返程|返回|离开)/.test(candidate.title.trim());
+}
+
 export async function collectEvidence(
   brief: TripBrief,
   skeleton: ItinerarySkeleton,
@@ -99,7 +137,10 @@ export async function collectEvidence(
     });
   for (const day of plan.days) {
     const activities: Trip["days"][number]["activities"] = [];
-    for (const candidate of day.activities) {
+    const candidatesForDay = day.activities.filter(
+      (candidate) => !isTransferPlaceholder(candidate, brief),
+    );
+    for (const candidate of candidatesForDay) {
       const search = await call(
         "search_places",
         { keyword: candidate.keyword, city: candidate.city, maxResults: 3 },
@@ -108,7 +149,9 @@ export async function collectEvidence(
       );
       const candidates = object(search.data).candidates;
       const list = Array.isArray(candidates) ? candidates : [];
-      let detail = object(list.length === 1 ? list[0] : undefined);
+      let detail = object(
+        exactPlaceCandidate(list, candidate.keyword, candidate.city),
+      );
       if (detail.amapId) {
         const result = await call(
           "get_place_details",
@@ -291,7 +334,13 @@ export async function collectEvidence(
       title: `${brief.destination} · ${day.date}`,
       activities,
       legs: [],
-      notes: [...day.notes, "活动之间预留休息和临时调整时间。"],
+      notes: [
+        ...day.notes,
+        ...(candidatesForDay.length < day.activities.length
+          ? ["城际抵达或返程请通过下方平台入口另行确认，不作为景点处理。"]
+          : []),
+        "活动之间预留休息和临时调整时间。",
+      ],
     });
   }
   const normalized = normalizeEvidence(observations);

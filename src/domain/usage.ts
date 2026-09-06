@@ -13,7 +13,9 @@ export const DEFAULT_BUDGET_POLICY: BudgetPolicy = {
   maxSteps: 12,
   maxSearchCalls: 10,
   maxRepairRounds: 2,
-  maxOutputTokens: 16_000,
+  // V4 Pro counts hidden reasoning inside output usage. The bounded calls in
+  // the seven-stage pipeline can total up to 56k without exceeding this cap.
+  maxOutputTokens: 64_000,
   visitorModelCostSoftCny: 2,
   visitorModelCostHardCny: 5,
   ownerMonthlyWarnCny: 300,

@@ -57,7 +57,13 @@ function groupKey(observation: EvidenceObservation): string {
 }
 
 function stableId(prefix: string, value: string): string {
-  return `${prefix}:${createHash("sha256").update(value).digest("hex").slice(0, 24)}`;
+  const digest = createHash("sha256")
+    .update(value)
+    .digest("hex")
+    .slice(0, 24);
+  // Group machine-generated digits so a random hash can never resemble a
+  // contiguous mainland-China phone or identity number to the privacy guard.
+  return `${prefix}:${digest.match(/.{1,4}/g)!.join("-")}`;
 }
 
 export function normalizeEvidence(
